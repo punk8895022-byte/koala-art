@@ -1,0 +1,148 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: users
+    // Fields: uid, email, displayName, role, studioName, studioPhone, studioAddress, bankInfo, logoUrl
+    //
+    // Collection: transactions, courses, inventory, expenses, packages, attendance, schedules
+    // Fields: All contain a 'uid' field representing the owner.
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isDocOwner() {
+      return isAuthenticated() && request.auth.uid == resource.data.uid;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+          (request.auth.token.email == "punk8895022@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    function uidUnchanged() {
+      return !('uid' in request.resource.data) || request.resource.data.uid == request.auth.uid;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+    function isValidTransaction(data) {
+      return hasOnlyAllowedFields(['id', 'date', 'name', 'course', 'medium', 'amount', 'paid', 'year', 'uid']) &&
+             data.id is string && data.date is string && data.name is string &&
+             data.amount is number && data.uid == request.auth.uid;
+    }
+
+    function isValidCourse(data) {
+      return hasOnlyAllowedFields(['id', 'title', 'category', 'price', 'description', 'color', 'active', 'type', 'mediums', 'uid']) &&
+             data.id is string && data.title is string && data.price is number &&
+             data.type in ['course', 'medium'] && data.uid == request.auth.uid;
+    }
+
+    function isValidInventory(data) {
+      return hasOnlyAllowedFields(['id', 'name', 'category', 'quantity', 'unit', 'minQuantity', 'costPerUnit', 'lastRestocked', 'uid']) &&
+             data.id is string && data.name is string && data.quantity is number &&
+             data.uid == request.auth.uid;
+    }
+
+    function isValidExpense(data) {
+      return hasOnlyAllowedFields(['id', 'date', 'category', 'amount', 'description', 'uid']) &&
+             data.id is string && data.date is string && data.amount is number &&
+             data.uid == request.auth.uid;
+    }
+
+    function isValidPackage(data) {
+      return hasOnlyAllowedFields(['id', 'studentName', 'totalClasses', 'usedClasses', 'purchaseDate', 'expiryDate', 'notes', 'uid']) &&
+             data.id is string && data.studentName is string && data.totalClasses is number &&
+             data.uid == request.auth.uid;
+    }
+
+    function isValidAttendance(data) {
+      return hasOnlyAllowedFields(['id', 'studentName', 'date', 'courseTitle', 'notes', 'uid']) &&
+             data.id is string && data.studentName is string && data.date is string &&
+             data.uid == request.auth.uid;
+    }
+
+    function isValidSchedule(data) {
+      return hasOnlyAllowedFields(['id', 'courseId', 'courseTitle', 'dayOfWeek', 'startTime', 'endTime', 'instructor', 'room', 'maxStudents', 'color', 'uid']) &&
+             data.id is string && data.courseId is string && data.dayOfWeek is number &&
+             data.uid == request.auth.uid;
+    }
+
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isAuthenticated() && isOwner(userId) && 
+                    hasOnlyAllowedFields(['uid', 'email', 'displayName', 'role', 'studioName', 'studioPhone', 'studioAddress', 'bankInfo', 'logoUrl']) &&
+                    (request.resource.data.role == 'staff' || isAdmin());
+      allow update: if isAuthenticated() && isOwner(userId) && 
+                    (request.resource.data.role == resource.data.role || isAdmin());
+    }
+
+    match /transactions/{docId} {
+      allow read: if isAuthenticated() && (resource == null || resource.data.uid == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated() && isValidTransaction(request.resource.data);
+      allow update: if isAuthenticated() && isDocOwner() && isValidTransaction(request.resource.data);
+      allow delete: if isAuthenticated() && (isDocOwner() || isAdmin());
+    }
+
+    match /courses/{docId} {
+      allow read: if isAuthenticated() && (resource == null || resource.data.uid == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated() && isValidCourse(request.resource.data);
+      allow update: if isAuthenticated() && isDocOwner() && isValidCourse(request.resource.data);
+      allow delete: if isAuthenticated() && (isDocOwner() || isAdmin());
+    }
+
+    match /inventory/{docId} {
+      allow read: if isAuthenticated() && (resource == null || resource.data.uid == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated() && isValidInventory(request.resource.data);
+      allow update: if isAuthenticated() && isDocOwner() && isValidInventory(request.resource.data);
+      allow delete: if isAuthenticated() && (isDocOwner() || isAdmin());
+    }
+
+    match /expenses/{docId} {
+      allow read: if isAuthenticated() && (resource == null || resource.data.uid == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated() && isValidExpense(request.resource.data);
+      allow update: if isAuthenticated() && isDocOwner() && isValidExpense(request.resource.data);
+      allow delete: if isAuthenticated() && (isDocOwner() || isAdmin());
+    }
+
+    match /packages/{docId} {
+      allow read: if isAuthenticated() && (resource == null || resource.data.uid == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated() && isValidPackage(request.resource.data);
+      allow update: if isAuthenticated() && isDocOwner() && isValidPackage(request.resource.data);
+      allow delete: if isAuthenticated() && (isDocOwner() || isAdmin());
+    }
+
+    match /attendance/{docId} {
+      allow read: if isAuthenticated() && (resource == null || resource.data.uid == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated() && isValidAttendance(request.resource.data);
+      allow update: if isAuthenticated() && isDocOwner() && isValidAttendance(request.resource.data);
+      allow delete: if isAuthenticated() && (isDocOwner() || isAdmin());
+    }
+
+    match /schedules/{docId} {
+      allow read: if isAuthenticated() && (resource == null || resource.data.uid == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated() && isValidSchedule(request.resource.data);
+      allow update: if isAuthenticated() && isDocOwner() && isValidSchedule(request.resource.data);
+      allow delete: if isAuthenticated() && (isDocOwner() || isAdmin());
+    }
+  }
+}

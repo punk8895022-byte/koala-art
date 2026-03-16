@@ -1,0 +1,145 @@
+{
+  "entities": {
+    "Transaction": {
+      "title": "Transaction",
+      "description": "Revenue record for courses or mediums",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "date": { "type": "string", "format": "date" },
+        "name": { "type": "string" },
+        "course": { "type": "string" },
+        "medium": { "type": "string" },
+        "amount": { "type": "number" },
+        "paid": { "type": "boolean" },
+        "year": { "type": "string" },
+        "uid": { "type": "string", "description": "Owner UID" }
+      },
+      "required": ["id", "date", "name", "amount", "uid"]
+    },
+    "Course": {
+      "title": "Course",
+      "description": "Course or medium definition",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "price": { "type": "number" },
+        "category": { "type": "string" },
+        "color": { "type": "string" },
+        "type": { "type": "string", "enum": ["course", "medium"] },
+        "active": { "type": "boolean" },
+        "mediums": { "type": "array", "items": { "type": "string" } },
+        "uid": { "type": "string" }
+      },
+      "required": ["id", "title", "price", "type", "uid"]
+    },
+    "InventoryItem": {
+      "title": "InventoryItem",
+      "description": "Material inventory item",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "category": { "type": "string" },
+        "quantity": { "type": "number" },
+        "unit": { "type": "string" },
+        "minQuantity": { "type": "number" },
+        "costPerUnit": { "type": "number" },
+        "lastRestocked": { "type": "string" },
+        "uid": { "type": "string" }
+      },
+      "required": ["id", "name", "quantity", "uid"]
+    },
+    "Expense": {
+      "title": "Expense",
+      "description": "Operating expense record",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "date": { "type": "string" },
+        "category": { "type": "string" },
+        "amount": { "type": "number" },
+        "description": { "type": "string" },
+        "uid": { "type": "string" }
+      },
+      "required": ["id", "date", "category", "amount", "uid"]
+    },
+    "StudentPackage": {
+      "title": "StudentPackage",
+      "description": "Class package for a student",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "studentName": { "type": "string" },
+        "totalClasses": { "type": "number" },
+        "usedClasses": { "type": "number" },
+        "purchaseDate": { "type": "string" },
+        "notes": { "type": "string" },
+        "uid": { "type": "string" }
+      },
+      "required": ["id", "studentName", "totalClasses", "usedClasses", "uid"]
+    },
+    "AttendanceRecord": {
+      "title": "AttendanceRecord",
+      "description": "Attendance record for a student",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "studentName": { "type": "string" },
+        "date": { "type": "string" },
+        "courseTitle": { "type": "string" },
+        "notes": { "type": "string" },
+        "uid": { "type": "string" }
+      },
+      "required": ["id", "studentName", "date", "courseTitle", "uid"]
+    },
+    "Schedule": {
+      "title": "Schedule",
+      "description": "Weekly class schedule slot",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "courseId": { "type": "string" },
+        "courseTitle": { "type": "string" },
+        "dayOfWeek": { "type": "number" },
+        "startTime": { "type": "string" },
+        "endTime": { "type": "string" },
+        "instructor": { "type": "string" },
+        "room": { "type": "string" },
+        "maxStudents": { "type": "number" },
+        "color": { "type": "string" },
+        "uid": { "type": "string" }
+      },
+      "required": ["id", "courseId", "dayOfWeek", "startTime", "endTime", "uid"]
+    },
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile and role",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "role": { "type": "string", "enum": ["admin", "staff"] },
+        "studioName": { "type": "string" },
+        "studioPhone": { "type": "string" },
+        "studioAddress": { "type": "string" },
+        "bankInfo": { "type": "string" },
+        "logoUrl": { "type": "string" }
+      },
+      "required": ["uid", "email", "role"]
+    }
+  },
+  "firestore": {
+    "transactions": { "schema": "Transaction", "description": "Revenue records" },
+    "courses": { "schema": "Course", "description": "Course definitions" },
+    "inventory": { "schema": "InventoryItem", "description": "Inventory items" },
+    "expenses": { "schema": "Expense", "description": "Expense records" },
+    "packages": { "schema": "StudentPackage", "description": "Student class packages" },
+    "attendance": { "schema": "AttendanceRecord", "description": "Attendance records" },
+    "schedules": { "schema": "Schedule", "description": "Class schedules" },
+    "users": { "schema": "UserProfile", "description": "User profiles" }
+  }
+}
